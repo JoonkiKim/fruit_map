@@ -59,7 +59,7 @@ export default function BoardWrite(props: IBoardWriteProps) {
   // 일단 이렇게 input박스마다 나눠서 함수를 만들어주는게 맞다!
 
   // event를 매개변수로 쓸때 전부다 ChangeEvent<HTMLInputElement>로 타입 정의해줘야 한다
-  function onChangeWriter(event: ChangeEvent<HTMLInputElement>) {
+  function onChangeWriter(event: ChangeEvent<HTMLInputElement>): void {
     setWriter(event.target.value);
     if (event.target.value !== "") {
       setWriterError("");
@@ -98,7 +98,7 @@ export default function BoardWrite(props: IBoardWriteProps) {
     }
   }
 
-  const onSubmit = async () => {
+  const onSubmit = async (): Promise<void> => {
     // <거짓에 대하여>
     // 대부분은 참이고, 아래의 것들만 외우면 된다
     // 숫자 0, 빈문자열 "", false, null, undefined, NaN
