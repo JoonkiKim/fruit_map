@@ -124,9 +124,9 @@ export default function BoardWrite(props: IBoardWriteProps) {
           //
           variables: {
             createBoardInput: {
-              writer: writer,
-              password: password,
-              title: title,
+              writer,
+              password,
+              title,
               contents: content,
               // 왼쪽에 써있는 이름들은 서버에서 정의한대로 써야된다.
               // 그 내용은 플레이그라운드 docs에서 볼 수 있다
@@ -138,10 +138,15 @@ export default function BoardWrite(props: IBoardWriteProps) {
         // alert("회원가입이 완료되었습니다!");
         // 전부다 뭐가 입력되어있으면 회원가입 완료 메시지 출력
 
+        if (!result.data) {
+          alert("시스템에 문제가 있습니다");
+          return;
+        }
+
         router.push(`/boards/${result.data.createBoard._id}`);
         // pages는 안 써줘도 된다
       } catch (error) {
-        alert(error.message);
+        if (error instanceof Error) alert(error.message);
       }
     }
   };
@@ -191,6 +196,10 @@ export default function BoardWrite(props: IBoardWriteProps) {
         },
       });
 
+      if (!result.data) {
+        alert("시스템에 문제가 있습니다");
+        return;
+      }
       router.push(`/boards/${result.data.updateBoard._id}`);
     } catch (error) {
       // error가 Error의 인스턴스이면 Error가 갖고 있는 기능인 message를 사용할 수 있다

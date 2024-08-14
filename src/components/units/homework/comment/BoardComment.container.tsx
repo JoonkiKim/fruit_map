@@ -102,7 +102,7 @@ export default function BoardComment() {
         setRating("");
         // 등록 후 입력칸을 빈문자열로 바꾸고 싶으면 setState로 일단 빈문자열을 만든다음에 해당 state를 아래의 태그에 연결해주면 됨 **
       } catch (error) {
-        alert(error.message);
+        if (error instanceof Error) alert(error.message);
       }
     }
   };
@@ -130,7 +130,7 @@ export default function BoardComment() {
         ],
       });
     } catch (error) {
-      alert(error.message);
+      if (error instanceof Error) alert(error.message);
     }
   };
 
