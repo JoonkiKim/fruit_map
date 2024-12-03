@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useMutation } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { useRouter } from "next/router";
 
 import {
@@ -7,7 +6,7 @@ import {
   FETCH_BOARD_COMMENTS,
   DELETE_BOARD_COMMENT,
 } from "./BoardComment.queries";
-import { useQuery } from "@apollo/client";
+
 import {
   IMutation,
   IMutationCreateBoardCommentArgs,
@@ -16,43 +15,76 @@ import {
   IQueryFetchBoardCommentsArgs,
 } from "../../../../commons/types/generated/types";
 
-import { ChangeEvent, MouseEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import { BoardCommentUI } from "./BoardComment.presenter";
 
 export default function BoardComment() {
-  const [writer, setWriter] = useState("");
-  const [password, setPw] = useState("");
-  const [content, setContent] = useState("");
-  const [rating, setRating] = useState("");
+  // <입력값 리팩토링>
+  const [inputs, setInputs] = useState({
+    writer: "",
+    password: "",
+    contents: "",
+  });
+  // const [writer, setWriter] = useState("");
+  // const [password, setPw] = useState("");
+  // const [content, setContent] = useState("");
+  const [rating, setRating] = useState<number>(0);
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [deletePw, setDeletePw] = useState<string>();
+  const [isModalAlertOpen, setIsModalAlertOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  // if (!router || typeof router.query.boardId !== "string") {
+  //   return <></>; // 훅 호출을 막기 위해 빈 상태를 반환합니다.
+  // }
 
-  if (!router || typeof router.query.boardId !== "string") return <></>;
-
-  const { data: list } = useQuery<
+  const { data: list, fetchMore } = useQuery<
     Pick<IQuery, "fetchBoardComments">,
     IQueryFetchBoardCommentsArgs
   >(FETCH_BOARD_COMMENTS, {
-    variables: { boardId: router.query.boardId },
+    variables: { boardId: String(router.query.boardId) },
   });
   console.log(list);
 
   // id를 연결하는 query를 할때는 useQuery안에 id를 같이 넣어줘야 한다
 
-  function onChangeWriter(event: ChangeEvent<HTMLInputElement>) {
-    setWriter(event.target.value);
-  }
+  const onChageInputs = (event: ChangeEvent<HTMLInputElement>) => {
+    setInputs({
+      ...inputs,
+      [event.target.id]: event.target.value,
+    });
+  };
+  const onChageInputsTxt = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    setInputs({
+      ...inputs,
+      [event.target.id]: event.target.value,
+    });
+  };
+  // function onChangeWriter(event: ChangeEvent<HTMLInputElement>) {
+  //   setWriter(event.target.value);
+  // }
 
-  function onChangePw(event: ChangeEvent<HTMLInputElement>) {
-    setPw(event.target.value);
-  }
+  // function onChangePw(event: ChangeEvent<HTMLInputElement>) {
+  //   setPw(event.target.value);
+  // }
 
-  function onChangeContent(event: ChangeEvent<HTMLInputElement>) {
-    setContent(event.target.value);
-  }
+  // function onChangeContent(event: ChangeEvent<HTMLInputElement>) {
+  //   setContent(event.target.value);
+  // }
 
-  function onChangeRating(event: ChangeEvent<HTMLInputElement>) {
-    setRating(event.target.value);
+  function onChangeRating(value: number) {
+    setRating(value);
   }
+  const onToggleModal = () => {
+    setIsOpen((prev) => !prev);
+  };
+  const onToggleAlertModal = () => {
+    setIsModalAlertOpen((prev) => !prev);
+  };
+
+  const onChangeDeletePw = (event: ChangeEvent<HTMLInputElement>) => {
+    setDeletePw(event.target.value);
+  };
 
   const [createBoardComment] = useMutation<
     Pick<IMutation, "createBoardComment">,
@@ -69,15 +101,13 @@ export default function BoardComment() {
     // 숫자 0, 빈문자열 "", false, null, undefined, NaN
     // 참<>거짓 바꾸는 기호는 느낌표 !
 
-    if (writer && password && content && rating) {
+    if (inputs.writer && inputs.password && inputs.contents && rating) {
       try {
         const result = await createBoardComment({
           //
           variables: {
             createBoardCommentInput: {
-              writer: writer,
-              contents: content,
-              password: password,
+              ...inputs,
               rating: Number(rating),
 
               // 왼쪽에 써있는 이름들은 서버에서 정의한대로 써야된다.
@@ -95,43 +125,67 @@ export default function BoardComment() {
           ],
           // 등록하기에서 리패치를 적용하려면 boardId를 같이 적어줘야 한다!
         });
-
-        setWriter("");
-        setPw("");
-        setContent("");
-        setRating("");
-        // 등록 후 입력칸을 빈문자열로 바꾸고 싶으면 setState로 일단 빈문자열을 만든다음에 해당 state를 아래의 태그에 연결해주면 됨 **
+        console.log(result);
+        setInputs({ writer: "", password: "", contents: "" });
+        setRating(0);
       } catch (error) {
-        if (error instanceof Error) alert(error.message);
+        if (error instanceof Error) setModalMessage(error.message);
+        onToggleAlertModal();
       }
     }
   };
 
-  const onClickDelete = (event: MouseEvent<HTMLButtonElement>) => {
-    const qqq = prompt("암호를 입력하세요");
+  const onClickDelete = async (id: string) => {
     try {
-      if (!(event.target instanceof HTMLButtonElement)) {
-        alert("시스템에 문제가 있습니다");
-        return;
-      }
       // 아래에서 event.target.id 에 빨간줄 뜨는 문제는 event.target이 태그임을 선언해주는 코드로 해결할 수 있다
-      deleteBoardComment({
-        variables: {
-          boardCommentId: event.target.id,
 
-          password: qqq,
+      await deleteBoardComment({
+        variables: {
+          boardCommentId: id,
+
+          password: deletePw,
         },
         refetchQueries: [
           {
             query: FETCH_BOARD_COMMENTS,
-            variables: { boardId: router.query.boardId },
+            variables: { boardId: String(router.query.boardId) },
             // 얘도 boardId링크를 해줘야 되는 거였음
           },
         ],
       });
+      setIsOpen(false);
     } catch (error) {
-      if (error instanceof Error) alert(error.message);
+      if (error instanceof Error) setModalMessage(error.message);
+      onToggleAlertModal();
     }
+  };
+
+  const onLoadMore = (): void => {
+    if (list === undefined) return;
+
+    fetchMore({
+      variables: {
+        page: Math.ceil((list.fetchBoardComments.length ?? 10) / 10) + 1,
+      },
+      // 위의 수식은 기존 페이지 + 1을 만드는 코드
+      updateQuery: (prev, { fetchMoreResult }) => {
+        if (fetchMoreResult.fetchBoardComments === undefined) {
+          // fetchMoreResult.fetchBoards가 없으면 기존 댓글을 불러오고, 있으면 뒤에거 더해서 fetchMore를 해줘라
+          return {
+            fetchBoardComments: [...prev.fetchBoardComments],
+          };
+        }
+
+        return {
+          fetchBoardComments: [
+            ...prev.fetchBoardComments,
+            ...fetchMoreResult.fetchBoardComments,
+          ],
+          // ... 스프레드 연산자 써주는거 까먹지 말기!
+          // fetchBoards에 배열로 되어있는 댓글 목록들을 복사해주기 위해 스프레드 연산자가 필요한거임
+        };
+      },
+    });
   };
 
   //   console.log(list);
@@ -139,16 +193,20 @@ export default function BoardComment() {
     <div>
       <BoardCommentUI
         list={list}
-        onChangeWriter={onChangeWriter}
-        onChangePw={onChangePw}
-        onChangeContent={onChangeContent}
+        onChageInputs={onChageInputs}
+        onChageInputsTxt={onChageInputsTxt}
         onChangeRating={onChangeRating}
         onSubmit={onSubmit}
         onClickDelete={onClickDelete}
-        writer={writer} // 추가된 부분
-        password={password} // 추가된 부분
-        content={content} // 추가된 부분
-        rating={rating} // 추가된 부분
+        onChangeDeletePw={onChangeDeletePw}
+        isOpen={isOpen}
+        onToggleModal={onToggleModal}
+        inputs={inputs}
+        rating={rating}
+        isModalAlertOpen={isModalAlertOpen}
+        onToggleAlertModal={onToggleAlertModal}
+        modalMessage={modalMessage}
+        onLoadMore={onLoadMore}
       />
     </div>
   );

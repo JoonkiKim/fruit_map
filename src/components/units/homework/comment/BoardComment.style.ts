@@ -1,8 +1,9 @@
 import styled from "@emotion/styled";
+import { Modal, Rate } from "antd";
 
 export const Wrapper = styled.div`
   box-sizing: border-box;
-  width: 996px;
+  width: 1200px;
 
   margin-top: 50px;
   padding-top: 30px;
@@ -15,6 +16,9 @@ export const Wrapper = styled.div`
   justify-content: center;
   align-items: center; */
   margin-left: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `;
 
 export const WriteWrapper = styled.div`
@@ -33,6 +37,9 @@ export const CommentWritPass = styled.div`
   width: 996px;
   /* background-color: purple; */
   margin-bottom: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 `;
 
 export const CommentWriter = styled.input`
@@ -51,11 +58,13 @@ export const CommentPw = styled.input`
   border: 1px solid #bdbdbd;
 `;
 
-export const Rating = styled.input`
-  width: 100px;
+export const Rating = styled.div`
+  width: 200px;
   height: 52px;
-  border-radius: 0px;
-  border: 1px solid #bdbdbd;
+  margin-left: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 `;
 
 export const PositionWrapper = styled.div`
@@ -66,8 +75,8 @@ export const PositionWrapper = styled.div`
   /* background-color: yellow; */
 `;
 
-export const CommentContent = styled.input`
-  width: 989px;
+export const CommentContent = styled.textarea`
+  width: 997px;
   height: 161px;
   position: absolute;
   border-radius: 0px;
@@ -75,6 +84,9 @@ export const CommentContent = styled.input`
   top: 0;
   left: 0;
   border: 1px solid #bdbdbd;
+  resize: none;
+  overflow: hidden;
+
   /* background-color: yellow; */
 `;
 
@@ -119,10 +131,11 @@ export const TextCounter = styled.span`
 `;
 
 export const CommentBtn = styled.button`
-  width: 91px;
-  height: 52px;
+  width: 94px;
+  height: 45px;
   background-color: black;
   color: white;
+  font-size: 16px;
 `;
 
 export const ListWrapper = styled.div`
@@ -179,7 +192,7 @@ export const WriterWrapper = styled.div`
 `;
 
 export const RatingWrapper = styled.div`
-  width: 100px;
+  width: 200px;
   /* background-color: blue; */
 `;
 
@@ -205,3 +218,9 @@ export const DeleteBtn = styled.button`
   color: #bdbdbd;
   margin-left: 200px;
 `;
+
+export const StarFive = styled(Rate)``;
+
+export const StarResult = styled(Rate)``;
+
+export const ModalAlert = styled(Modal)``;

@@ -1,6 +1,8 @@
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 // 항상 useState를 import해와서 써야된다
 import { useMutation } from "@apollo/client";
+
+import { Address } from "react-daum-postcode";
 
 import BoardWriteUI from "./BoardWrite.presenter";
 
@@ -15,8 +17,9 @@ import {
 } from "../../../../commons/types/generated/types";
 
 interface IBoardWriteProps {
-  isEdit?: boolean;
+  isEdit: boolean;
   data?: Pick<IQuery, "fetchBoard">;
+  isOpen?: boolean;
   // Query함수 통해서 {data} 받아올때의 타입은 코드젠에 있는 내용으로 한다!
 }
 
@@ -25,19 +28,11 @@ export default function BoardWrite(props: IBoardWriteProps) {
   const [password, setPw] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  // const [postCode, setPostCode] = useState("");
-  // const [adrs, setAdrs] = useState("");
-  // const [ytube, setYtube] = useState("");
-  // const [mainSetting, setMainSetting] = useState("");
 
   const [writerError, setWriterError] = useState("");
   const [pwError, setPwError] = useState("");
   const [titleError, setTitleError] = useState("");
   const [contentError, setContentError] = useState("");
-  // const [postCodeError, setPostCodeError] = useState("");
-  // const [adrsError, setAdrsError] = useState("");
-  // const [ytubeError, setYtubeError] = useState("");
-  // const [mainSettingError, setMainSettingError] = useState("");
 
   const [myfx] = useMutation<
     Pick<IMutation, "createBoard">,
@@ -53,6 +48,15 @@ export default function BoardWrite(props: IBoardWriteProps) {
   const router = useRouter();
 
   const [isActive, setIsActive] = useState(false);
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [addressData, setAddressData] = useState<Address | undefined>();
+  const [addressDataDetail, setAddressDataDetail] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [isModalAlertOpen, setIsModalAlertOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+
+  const [fileUrls, setfileUrls] = useState(["", "", ""]);
 
   // container에서 FETCH_BOARD를 통한 data생성을 안하는 이유는 등록하기 페이지에서 이걸 할필요가 없기 때문. 따라서 edit에서 data를 만들어줘서 거기서부터 props로 넘겨준다 (원칙상 container에 만드는게 맞는것 같았지만, 업무는 효율로 하는거다. edit에 있는게 효율적이다)
 
@@ -98,6 +102,27 @@ export default function BoardWrite(props: IBoardWriteProps) {
     }
   }
 
+  function onChangeAddressDetail(event: ChangeEvent<HTMLInputElement>) {
+    setAddressDataDetail(event.target.value);
+  }
+
+  const onChangeYoutubeUrl = (event: ChangeEvent<HTMLInputElement>) => {
+    setYoutubeUrl(event.target.value);
+  };
+
+  const onToggleModal = () => {
+    setIsOpen((prev) => !prev);
+  };
+  const onToggleAlertModal = () => {
+    setIsModalAlertOpen((prev) => !prev);
+  };
+
+  const handleComplete = (data: Address) => {
+    console.log(data);
+    setAddressData(data);
+    onToggleModal();
+  };
+
   const onSubmit = async (): Promise<void> => {
     // <거짓에 대하여>
     // 대부분은 참이고, 아래의 것들만 외우면 된다
@@ -128,6 +153,15 @@ export default function BoardWrite(props: IBoardWriteProps) {
               password,
               title,
               contents: content,
+              youtubeUrl,
+              boardAddress: {
+                zipcode: addressData?.zonecode,
+                address: addressData?.address,
+                addressDetail: addressDataDetail,
+              },
+              images: [...fileUrls],
+              // 배열스테이트에 대한 복사는 [...원본스테이트] 이렇게 한다
+
               // 왼쪽에 써있는 이름들은 서버에서 정의한대로 써야된다.
               // 그 내용은 플레이그라운드 docs에서 볼 수 있다
               // + 객체에서 키와 값이 동일하게 생겼으면 값이름을 생략할 수 있다 -> short-handproperty
@@ -139,19 +173,26 @@ export default function BoardWrite(props: IBoardWriteProps) {
         // 전부다 뭐가 입력되어있으면 회원가입 완료 메시지 출력
 
         if (!result.data) {
-          alert("시스템에 문제가 있습니다");
+          setModalMessage("시스템에 문제가 있습니다");
+          onToggleAlertModal();
           return;
         }
 
         router.push(`/boards/${result.data.createBoard._id}`);
         // pages는 안 써줘도 된다
       } catch (error) {
-        if (error instanceof Error) alert(error.message);
+        if (error instanceof Error) setModalMessage(error.message);
+        onToggleAlertModal();
       }
     }
   };
 
   const onClickUpdate = async () => {
+    const currentFiles = JSON.stringify(fileUrls);
+    const defaultFiles = JSON.stringify(props.data?.fetchBoard.images);
+    const isChangedFiles = currentFiles !== defaultFiles;
+    // 기존 이미지 주소랑 새로운 이미지 주소가 다를때만 true를 반환하게
+
     // 아무것도 수정 안했을때 알러트도 날려주기
 
     // 아래의 코드를 if else의 형태로 작성하면 else가 많아졌을때 코드 확인이 어려워서 유지보수가 어려움
@@ -159,13 +200,24 @@ export default function BoardWrite(props: IBoardWriteProps) {
 
     // => 이런 과정을 '리팩토링'이라고 부름 : 결과는 똑같은데 내용이 더 쉬워짐
 
-    if (!title && !content) {
-      alert("수정한 내용이 없습니다");
+    if (
+      !title &&
+      !content &&
+      !addressData &&
+      !addressDataDetail &&
+      !isChangedFiles
+    ) {
+      // alert("수정한 내용이 없습니다");
+      setModalMessage("수정한 내용이 없습니다");
+      onToggleAlertModal();
+
       return;
       // 에러를 내보내고 아래를 실행하면 안되니까 return으로 멈춰준다
     }
     if (!password) {
-      alert("비밀번호를 입력해주세요");
+      // alert("비밀번호를 입력해주세요");
+      setModalMessage("비밀번호를 입력해주세요");
+      onToggleAlertModal();
       return;
     }
 
@@ -178,11 +230,28 @@ export default function BoardWrite(props: IBoardWriteProps) {
     if (content) {
       updateBoardInput.contents = content;
     }
+    if (youtubeUrl) {
+      updateBoardInput.youtubeUrl = youtubeUrl;
+    }
+    if (addressData || addressDataDetail) {
+      updateBoardInput.boardAddress = {};
+      if (addressData) {
+        updateBoardInput.boardAddress.zipcode = addressData.zonecode;
+        updateBoardInput.boardAddress.address = addressData.address;
+      }
+      if (addressDataDetail) {
+        updateBoardInput.boardAddress.addressDetail = addressDataDetail;
+      }
+    }
+    if (isChangedFiles) updateBoardInput.images = fileUrls;
+
     try {
       // 여기서 updateBoard를 쓰려면 queries에서 updateBoard를 정의해주고 import까지 해서 써야된다
 
       if (typeof router.query.boardId !== "string") {
-        alert("시스템에 문제가 있습니다");
+        // alert("시스템에 문제가 있습니다");
+        setModalMessage("시스템에 문제가 있습니다");
+        onToggleAlertModal();
         return;
       }
       const result = await updateBoard({
@@ -197,15 +266,33 @@ export default function BoardWrite(props: IBoardWriteProps) {
       });
 
       if (!result.data) {
-        alert("시스템에 문제가 있습니다");
+        // alert("시스템에 문제가 있습니다");
+        setModalMessage("시스템에 문제가 있습니다");
+        onToggleAlertModal();
         return;
       }
       router.push(`/boards/${result.data.updateBoard._id}`);
     } catch (error) {
       // error가 Error의 인스턴스이면 Error가 갖고 있는 기능인 message를 사용할 수 있다
-      if (error instanceof Error) alert(error.message);
+      if (error instanceof Error) setModalMessage(error.message);
+      onToggleAlertModal();
     }
   };
+
+  const onChangeUrl = (fileUrl: string, index: number) => {
+    const newfileUrl = [...fileUrls]; // 배열을 복사하여 새로운 배열 생성
+    // 특정 인덱스의 주소를 새로 인자로 받아온 주소로 바꿈
+    newfileUrl[index] = fileUrl;
+    setfileUrls(newfileUrl);
+  };
+
+  // ** 수정하기 페이지에서 이미지 defaultValue하는 법
+  // 이렇게 다시 나아중에 그려주기만 하면 된다...! 겁나 편하다
+  // 이미 담겨있는 이미지가 있는 상태에서 그게 있는지 확인하고, 있으면 기존 이미지를 그려주고 없으면 멈추고 다른 데이터를 기다린다
+  useEffect(() => {
+    const images = props.data?.fetchBoard.images;
+    if (images !== undefined && images !== null) setfileUrls([...images]);
+  }, [props.data]);
 
   return (
     <BoardWriteUI
@@ -222,7 +309,19 @@ export default function BoardWrite(props: IBoardWriteProps) {
       isActive={isActive}
       isEdit={props.isEdit}
       data={props.data}
+      isOpen={isOpen}
+      onToggleModal={onToggleModal}
+      handleComplete={handleComplete}
+      addressData={addressData}
+      youtubeUrl={youtubeUrl}
+      onChangeYoutubeUrl={onChangeYoutubeUrl}
+      onChangeAddressDetail={onChangeAddressDetail}
       // props반환할때 그냥 같은 이름으로 해주면 훨씬 편하다!
+      onToggleAlertModal={onToggleAlertModal}
+      isModalAlertOpen={isModalAlertOpen}
+      modalMessage={modalMessage}
+      onChangeUrl={onChangeUrl}
+      fileUrls={fileUrls}
     />
   );
 }

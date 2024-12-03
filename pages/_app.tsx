@@ -1,20 +1,28 @@
 // 모든 페이지에서 사용하는 공통 설정들을 여기서 한다
 
-import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
 import type { AppProps } from "next/app";
+import Layout from "../src/components/commons/layout";
+import ApolloSetting from "../src/components/commons/layout/apollo";
+import { Global } from "@emotion/react";
+import { globalStyles } from "../src/commons/styles/globalStyles";
+import { RecoilRoot } from "recoil";
 
 export default function App({ Component, pageProps }: AppProps) {
-  const client = new ApolloClient({
-    uri: "http://backend-example.codebootcamp.co.kr/graphql",
-    cache: new InMemoryCache(), // 컴퓨터의 메모리에다가 백엔드에서 받아온 데이터 임시로 저장해놓기 => 나중에 더 자세히 알아보기
-  });
   return (
     <div>
-      <ApolloProvider client={client}>
-        <Component {...pageProps} />
-        {/* // Component는 우리가 지금 보는 페이지 */}
-        {/* index.js에서 실행을 하면 html부분이 잘라내기 되어서 component부분으로 들어와서 실행이 된다 */}
-      </ApolloProvider>
+      <RecoilRoot>
+        {/* 이렇게 RecoilRoot로 전체를 감싸주면 글로벌 스테이트를 다들 공유할 수 있게 된다  */}
+        <ApolloSetting>
+          <>
+            <Global styles={globalStyles} />
+            <Layout>
+              <Component {...pageProps} />
+            </Layout>
+            {/* // Component는 우리가 지금 보는 페이지 */}
+            {/* index.js에서 실행을 하면 html부분이 잘라내기 되어서 component부분으로 들어와서 실행이 된다 */}
+          </>
+        </ApolloSetting>
+      </RecoilRoot>
     </div>
   );
 }

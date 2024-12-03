@@ -1,14 +1,25 @@
 import styled from "@emotion/styled";
+import { Modal } from "antd";
+
+export const ListPageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* background-color: red; */
+`;
 
 // 각 요소의 width를 %를 활용해서 주면 FirstLine과 List의 가로 길이를 같게 맞출 수 있다
 
 export const Wrapper = styled.div`
   box-sizing: border-box;
   width: 1500px;
-  margin-left: 50px;
-  margin-top: 50px;
+  /* margin-left: 50px;
+  margin-top: 50px; */
   /* background-color: green; */
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `;
 
 export const FirstLineWrapper = styled.div`
@@ -30,6 +41,7 @@ export const MainContentWrapper = styled.div`
   width: 1200px;
   background-color: white;
   border-bottom: 2px solid black;
+  margin-bottom: 5px;
 `;
 
 export const MainContent = styled.div`
@@ -39,6 +51,7 @@ export const MainContent = styled.div`
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
+  margin-bottom: 5px;
 
   border-top: 1px solid black;
   &:hover {
@@ -60,7 +73,8 @@ export const FDeleteBoxWrapper = styled.div`
 `;
 
 export const DeleteBtn = styled.button`
-  width: 50px;
+  width: 70px;
+  height: 50px;
 `;
 
 export const FIdWrapper = styled.div`
@@ -141,9 +155,48 @@ export const Footer = styled.div`
 `;
 
 export const MoveToWrite = styled.button`
-  width: 150px;
-  height: 40px;
+  width: 200px;
+  height: 80px;
   background-color: white;
   color: black;
   border-radius: 5px;
+  margin-bottom: 50px;
+`;
+
+export const ModalAlert = styled(Modal)``;
+
+export const SearchWrapper = styled.div`
+  width: 1200px;
+  height: 80px;
+  background-color: #f2f2f2;
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 50px;
+  padding: 5px;
+  border-radius: 10px;
+`;
+
+export const SearchTitle = styled.span`
+  margin-right: 20px;
+  font-weight: 900;
+  font-size: 25px;
+`;
+
+export const SearchWindow = styled.input`
+  width: 1000px;
+  height: 50px;
+  background-color: transparent;
+  border: none;
+  :focus {
+    outline: none;
+  }
+`;
+
+export const Magnifier = styled.img`
+  width: 30px;
+  height: 30px;
+
+  margin-left: 20px;
 `;

@@ -1,34 +1,57 @@
 import BoardListUI from "./BoardList.presenter";
-import { useQuery } from "@apollo/client";
-import { FETCH_BOARDS, DELETE_BOARD } from "./BoardList.queries";
+
+import {
+  FETCH_BOARDS,
+  DELETE_BOARD,
+  FETCH_BOARDS_COUNT,
+} from "./BoardList.queries";
 import { useRouter } from "next/router";
-import { useMutation } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import {
   IMutation,
   IMutationDeleteBoardArgs,
   IQuery,
+  IQueryFetchBoardsArgs,
+  IQueryFetchBoardsCountArgs,
 } from "../../../../commons/types/generated/types";
-import { MouseEvent } from "react";
+import { MouseEvent, useState } from "react";
 
 export default function BoardList() {
   const router = useRouter();
-  const { data } = useQuery<Pick<IQuery, "fetchBoards">>(FETCH_BOARDS);
+  // const { data } = useQuery<Pick<IQuery, "fetchBoards">>(FETCH_BOARDS);
   const [deleteBoard] = useMutation<
     Pick<IMutation, "deleteBoard">,
     IMutationDeleteBoardArgs
   >(DELETE_BOARD);
   //   console.log(data);
+  const [isModalAlertOpen, setIsModalAlertOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [startPage, setStartPage] = useState(1);
 
-  //presenter에서 el._id로 받아왔더라도 여기서는 event를 써주는거다. 왜냐면 onClick '이벤트'를 사용하는 함수이니까
+  const [keyword, setKeyword] = useState("");
+  const { data, refetch } = useQuery<
+    Pick<IQuery, "fetchBoards">,
+    IQueryFetchBoardsArgs
+  >(FETCH_BOARDS);
+  const { data: dataBoardsCount, refetch: refetchCount } = useQuery<
+    Pick<IQuery, "fetchBoardsCount">,
+    IQueryFetchBoardsCountArgs
+  >(FETCH_BOARDS_COUNT);
+
+  // presenter에서 el._id로 받아왔더라도 여기서는 event를 써주는거다. 왜냐면 onClick '이벤트'를 사용하는 함수이니까
   const moveToDetail = (event: MouseEvent<HTMLDivElement>) => {
     // 여기서는 HTMLDivElement이고 아래는 HTMLButtonElement를 쓰는 이유는 presenter에서 쓰는 태그가 각각 div, button이기 때문!
-    if (event.target instanceof HTMLDivElement)
+
+    if (event.currentTarget instanceof HTMLDivElement) {
       // 위의 if문은 event.target이 div태그의 instance즉 자식이고 따라서 event.target이 '태그'라는걸 명시해주는 것. 이걸 해주면 id부분에 빨간불이 안들어온다
+      console.log(event.target);
       try {
-        router.push(`/boards/${event.target.id}`);
+        router.push(`/boards/${event.currentTarget.id}`);
       } catch (error) {
-        alert(error.message);
+        if (error instanceof Error) setModalMessage(error.message);
+        onToggleAlertModal();
       }
+    }
   };
   // 매개변수를 안쓰고 싶으면 DeleteBtn할때 id={el._id} onClick={props.onClickDelete} 이 코드처럼 id연동해주는 것과 똑같이 해주면됨
   //
@@ -44,7 +67,8 @@ export default function BoardList() {
       router.push(`/boards/new`);
       // 도착하는 페이지에서 불러오기를 할게 없다면 따로 뭔가 설정을 할 필요는 없다!
     } catch (error) {
-      alert(error.message);
+      if (error instanceof Error) setModalMessage(error.message);
+      onToggleAlertModal();
     }
   };
 
@@ -76,12 +100,26 @@ export default function BoardList() {
   //   return `${year}-${month}-${day}`;
   // };
 
+  const onToggleAlertModal = () => {
+    setIsModalAlertOpen((prev) => !prev);
+  };
+
   return (
     <BoardListUI
       data={data}
       moveToDetail={moveToDetail}
       moveToWrite={moveToWrite}
       onClickDelete={onClickDelete}
+      onToggleAlertModal={onToggleAlertModal}
+      isModalAlertOpen={isModalAlertOpen}
+      modalMessage={modalMessage}
+      refetch={refetch}
+      startPage={startPage}
+      setStartPage={setStartPage}
+      keyword={keyword}
+      setKeyword={setKeyword}
+      dataBoardsCount={dataBoardsCount}
+      refetchCount={refetchCount}
     />
   );
 }

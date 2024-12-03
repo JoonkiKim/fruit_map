@@ -2,8 +2,7 @@ import { useMutation } from "@apollo/client";
 import { useState, ChangeEvent } from "react";
 import BoardWriteUI from "./BoardWrite.presenter";
 
-import { 나의그래프큐엘셋팅 } from "./BoardWrite.query";
-import { UPDATE_BOARD } from "./BoardWrite.query";
+import { UPDATE_BOARD, 나의그래프큐엘셋팅 } from "./BoardWrite.query";
 import { useRouter } from "next/router";
 import { IBoardWriteProps, IMyvariables } from "./BoardWrite.types";
 
@@ -33,9 +32,9 @@ export default function BoardWrite(props: IBoardWriteProps) {
       variables: {
         // variables가 $랑 같은거임!
         // 아래에서 input을 통해 state에 저장된 값을 여기서 받아온다
-        writer: writer,
-        title: title,
-        contents: contents,
+        writer,
+        title,
+        contents,
       },
     });
     console.log(result);

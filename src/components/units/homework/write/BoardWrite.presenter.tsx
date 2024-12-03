@@ -1,4 +1,8 @@
 import { ChangeEvent, MouseEvent } from "react";
+import { Modal } from "antd";
+import DaumPostcodeEmbed, { Address } from "react-daum-postcode";
+
+import { v4 as uuidv4 } from "uuid";
 
 import {
   Wrapper,
@@ -21,9 +25,6 @@ import {
   YoutubeInput,
   PictureInputWrapper,
   PictureCaption,
-  PictureButton,
-  ButtonText,
-  ButtonWrapper,
   MainSettingWrapper,
   MainSettingCaption,
   MainSettingInput,
@@ -38,8 +39,11 @@ import {
   PwInput,
   TopLineWrapper,
   ErMes,
-} from "../../../../../styles/register_css";
+  ModalAlert,
+  ImageWrapper,
+} from "./BoardWrite.style";
 import { IQuery } from "../../../../commons/types/generated/types";
+import ImageComponent from "../../../commons/imageUpload/Upload01.container";
 
 interface IBoardWriteUIProps {
   aa: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -48,13 +52,26 @@ interface IBoardWriteUIProps {
   dd: (event: ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (event: MouseEvent<HTMLButtonElement>) => void;
   onClickUpdate: (event: MouseEvent<HTMLButtonElement>) => void;
+  onToggleModal: () => void;
+  handleComplete: (data: Address) => void;
   writerError: string;
   pwError: string;
   titleError: string;
   contentError: string;
-  isActive?: boolean;
-  isEdit?: boolean;
+  isActive: boolean;
+  isEdit: boolean;
   data?: Pick<IQuery, "fetchBoard">;
+  isOpen: boolean;
+  addressData?: Address | undefined;
+  youtubeUrl: string;
+  onChangeYoutubeUrl: (event: ChangeEvent<HTMLInputElement>) => void;
+  onChangeAddressDetail: (event: ChangeEvent<HTMLInputElement>) => void;
+
+  onToggleAlertModal: () => void;
+  isModalAlertOpen: boolean;
+  modalMessage: string;
+  onChangeUrl: (fileUrl: string, index: number) => void;
+  fileUrls: string[];
 }
 
 export default function BoardWriteUI(props: IBoardWriteUIProps) {
@@ -106,7 +123,7 @@ export default function BoardWriteUI(props: IBoardWriteUIProps) {
         <ContentCaption>내용</ContentCaption>
         <ContentInput
           type="text"
-          onChange={props.dd} //dd
+          onChange={props.dd} // dd
           placeholder="내용을 작성해주세요."
           defaultValue={props.data?.fetchBoard.contents}
           // 그냥 placeholder밑에 defaultValue 바로 써주면 알아서 둘 중 하나로 표시된다
@@ -120,15 +137,48 @@ export default function BoardWriteUI(props: IBoardWriteUIProps) {
             type="text"
             // onChange={props.ff}
             placeholder="07250"
+            readOnly
+            value={
+              props.addressData?.zonecode ||
+              props.data?.fetchBoard.boardAddress?.zipcode ||
+              ""
+            }
+            // defaultValue={props.addressData?.zonecode}
+            // value랑 defaultValue랑 같이 쓰면 react가 헷갈려한다. 그래서 defaultValue가 무시된다 =>  defaultvalue만 단독으로 쓰고 || 통해서 있을때 없을때를 나눠주면됨
           ></PostCodeInput>
 
-          <PostSearchButton>우편번호 검색</PostSearchButton>
+          <PostSearchButton onClick={props.onToggleModal}>
+            우편번호 검색{" "}
+          </PostSearchButton>
+          {props.isOpen && (
+            <Modal
+              open={true}
+              onOk={props.onToggleModal}
+              onCancel={props.onToggleModal}
+            >
+              <DaumPostcodeEmbed onComplete={props.handleComplete} />
+            </Modal>
+          )}
         </FirstLineWrapper>
         <AdressInputWrapper>
-          <AdressInput type="text"></AdressInput>
+          <AdressInput
+            type="text"
+            readOnly
+            value={
+              props.addressData?.address ||
+              props.data?.fetchBoard.boardAddress?.address ||
+              ""
+            }
+          ></AdressInput>
         </AdressInputWrapper>
         <AdressInputWrapper>
-          <AdressInput></AdressInput>
+          <AdressInput
+            type="text"
+            onChange={props.onChangeAddressDetail}
+            defaultValue={
+              props.data?.fetchBoard.boardAddress?.addressDetail ?? ""
+            }
+          ></AdressInput>
         </AdressInputWrapper>
       </AdressWrapper>
       <YoutubeInputWrapper>
@@ -136,25 +186,24 @@ export default function BoardWriteUI(props: IBoardWriteUIProps) {
         <YoutubeInput
           type="text"
           placeholder="링크를 복사해주세요."
+          // value={props.youtubeUrl}
+          onChange={props.onChangeYoutubeUrl}
+          defaultValue={props.data?.fetchBoard.youtubeUrl ?? ""}
         ></YoutubeInput>
       </YoutubeInputWrapper>
       <PictureInputWrapper>
         <PictureCaption>사진 첨부</PictureCaption>
 
-        <ButtonWrapper>
-          <PictureButton>
-            <ButtonText>+</ButtonText>
-            <ButtonText>upload</ButtonText>
-          </PictureButton>
-          <PictureButton>
-            <ButtonText>+</ButtonText>
-            <ButtonText>upload</ButtonText>
-          </PictureButton>
-          <PictureButton>
-            <ButtonText>+</ButtonText>
-            <ButtonText>upload</ButtonText>
-          </PictureButton>
-        </ButtonWrapper>
+        <ImageWrapper>
+          {props.fileUrls.map((el, index) => (
+            <ImageComponent
+              key={uuidv4()}
+              index={index}
+              fileUrl={el}
+              onChangeFileUrls={props.onChangeUrl}
+            />
+          ))}
+        </ImageWrapper>
       </PictureInputWrapper>
 
       <MainSettingWrapper>
@@ -187,6 +236,14 @@ export default function BoardWriteUI(props: IBoardWriteUIProps) {
       >
         {props.isEdit ? "수정" : "등록"}하기
       </RegisterButton>
+      <ModalAlert
+        open={props.isModalAlertOpen}
+        onClose={props.onToggleAlertModal}
+        onOk={props.onToggleAlertModal}
+        onCancel={props.onToggleAlertModal}
+      >
+        <span>{props.modalMessage}</span>
+      </ModalAlert>
     </Wrapper>
   );
 }
