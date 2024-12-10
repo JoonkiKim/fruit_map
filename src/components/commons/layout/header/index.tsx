@@ -2,12 +2,12 @@ import styled from "@emotion/styled";
 import { useRouter } from "next/router";
 
 import { useRecoilState, useRecoilValueLoadable } from "recoil";
-import {
-  loggedInCheck,
-  restoreAccessTokenLoadable,
-} from "../../../../commons/stores";
+// import {
+//   loggedInCheck,
+//   restoreAccessTokenLoadable,
+// } from "../../../../commons/stores";
 import { gql, useQuery } from "@apollo/client";
-import { IQuery } from "../../../../commons/types/generated/types";
+// import { IQuery } from "../../../../commons/types/generated/types";
 import { useEffect } from "react";
 
 // import styled from "styled-components";
@@ -75,11 +75,11 @@ const FETCH_USER_LOGGED_IN = gql`
 `;
 
 export default function LayoutHeader() {
-  const [isLoggedIn, setIsLoggedIn] = useRecoilState(loggedInCheck);
+  // const [isLoggedIn, setIsLoggedIn] = useRecoilState(loggedInCheck);
 
-  const aaa = useRecoilValueLoadable(restoreAccessTokenLoadable);
-  const { data } =
-    useQuery<Pick<IQuery, "fetchUserLoggedIn">>(FETCH_USER_LOGGED_IN);
+  // const aaa = useRecoilValueLoadable(restoreAccessTokenLoadable);
+  // const { data } =
+  //   useQuery<Pick<IQuery, "fetchUserLoggedIn">>(FETCH_USER_LOGGED_IN);
   const router = useRouter();
   const onLogoClick = () => {
     router.push(`/boards`);
@@ -99,19 +99,19 @@ export default function LayoutHeader() {
   //     setIsLoggedIn(true);
   //   }
 
-  useEffect(() => {
-    aaa.toPromise().then((newAccessToken) => {
-      if (newAccessToken !== undefined) {
-        setIsLoggedIn(true);
-      }
-    });
-  }, [aaa]);
+  // useEffect(() => {
+  //   aaa.toPromise().then((newAccessToken) => {
+  //     if (newAccessToken !== undefined) {
+  //       setIsLoggedIn(true);
+  //     }
+  //   });
+  // }, [aaa]);
 
   return (
     <Wrapper>
       <CompWrapper>
         <Logo src="/images/logo.png" onClick={onLogoClick}></Logo>
-        <BtnWrapper>
+        {/* <BtnWrapper>
           {isLoggedIn ? (
             <div>{data?.fetchUserLoggedIn.name}님 환영합니다! </div>
           ) : (
@@ -120,7 +120,7 @@ export default function LayoutHeader() {
               <SignUpBtn onClick={onRegisterClick}>회원가입</SignUpBtn>
             </>
           )}
-        </BtnWrapper>
+        </BtnWrapper> */}
       </CompWrapper>
     </Wrapper>
   );
